@@ -4,7 +4,7 @@
 #include "standard.h"
 #include "ai.h"
 #include "scenario.h"
-#include "gamerule.h"
+#include "scenerule.h"
 #include "contestdb.h"
 #include "banpairdialog.h"
 #include "roomthread3v3.h"
@@ -1772,6 +1772,8 @@ void Room::startGame(){
     GameRule *game_rule;
     if(mode == "08boss")
         game_rule = new BossMode(this);
+    else if(Config.EnableScene)
+        game_rule = new SceneRule(this);
     else
         game_rule = new GameRule(this);
 

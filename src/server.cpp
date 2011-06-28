@@ -392,6 +392,8 @@ QLayout *ServerDialog::createRight(){
 
         second_general_checkbox = new QCheckBox(tr("Enable second general"));
 
+        scene_checkbox  = new QCheckBox(tr("Enable Scene"));
+
 
         max_hp_scheme_combobox = new QComboBox;
         max_hp_scheme_combobox->addItem(tr("Sum - 3"));
@@ -402,6 +404,8 @@ QLayout *ServerDialog::createRight(){
         connect(second_general_checkbox, SIGNAL(toggled(bool)), max_hp_scheme_combobox, SLOT(setEnabled(bool)));
 
         second_general_checkbox->setChecked(Config.Enable2ndGeneral);
+
+        scene_checkbox->setChecked(Config.EnableScene);
 
         QPushButton *banpair_button = new QPushButton(tr("Ban pairs table ..."));
         BanPairDialog *banpair_dialog = new BanPairDialog(this);
@@ -433,6 +437,7 @@ QLayout *ServerDialog::createRight(){
         layout->addWidget(free_choose_checkbox);
         layout->addLayout(HLay(new QLabel(tr("Upperlimit for general")), maxchoice_spinbox));
         layout->addLayout(HLay(second_general_checkbox, banpair_button));
+        layout->addWidget(scene_checkbox);
         layout->addLayout(HLay(new QLabel(tr("Max HP scheme")), max_hp_scheme_combobox));
         layout->addWidget(announce_ip_checkbox);
         layout->addLayout(HLay(new QLabel(tr("Address")), address_edit));
@@ -657,6 +662,7 @@ bool ServerDialog::config(){
     Config.ForbidSIMC = forbid_same_ip_checkbox->isChecked();
     Config.DisableChat = disable_chat_checkbox->isChecked();
     Config.Enable2ndGeneral = second_general_checkbox->isChecked();
+    Config.EnableScene = scene_checkbox->isChecked();
     Config.MaxHpScheme = max_hp_scheme_combobox->currentIndex();
     Config.AnnounceIP = announce_ip_checkbox->isChecked();
     Config.Address = address_edit->text();
@@ -683,6 +689,7 @@ bool ServerDialog::config(){
     Config.setValue("ForbidSIMC", Config.ForbidSIMC);
     Config.setValue("DisableChat", Config.DisableChat);
     Config.setValue("Enable2ndGeneral", Config.Enable2ndGeneral);
+    Config.setValue("EnableScene", Config.EnableScene);
     Config.setValue("MaxHpScheme", Config.MaxHpScheme);
     Config.setValue("EnableAI", Config.EnableAI);
     Config.setValue("RolePredictable", role_predictable_checkbox->isChecked());
