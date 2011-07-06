@@ -1857,10 +1857,10 @@ void Room::startGame(){
     GameRule *game_rule;
     if(mode == "08boss")
         game_rule = new BossMode(this);
-    else if(Config.EnableScene)
-        game_rule = new SceneRule(this);
     else if(mode == "04_1v3")
         game_rule = new HulaoPassMode(this);
+    else if(Config.EnableScene)
+        game_rule = new SceneRule(this);
     else
         game_rule = new GameRule(this);
 
