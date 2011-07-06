@@ -82,6 +82,9 @@ bool Slash::targetFilter(const QList<const Player *> &targets, const Player *to_
         slash_targets ++;
     }
 
+    if(Self->hasSkill("shenji") && Self->getWeapon() == NULL)
+        slash_targets = 3;
+
     if(targets.length() >= slash_targets)
         return false;
 
@@ -364,7 +367,7 @@ public:
             log.to << effect.to;
             room->sendLog(log);
 
-            room->slashResult(effect, true);
+            room->slashResult(effect, NULL);
         }
 
         return false;
