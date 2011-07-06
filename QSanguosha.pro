@@ -77,6 +77,8 @@ SOURCES += src/main.cpp \
     src/generalselector.cpp \
     src/packagingeditor.cpp \
     src/scenerule.cpp
+    src/boss-mode-scenario.cpp
+
 HEADERS += src/mainwindow.h \
     src/button.h \
     src/settings.h \
@@ -148,7 +150,11 @@ HEADERS += src/mainwindow.h \
     src/zombie-mode-scenario.h \
     src/generalselector.h \
     src/packagingeditor.h \
+<<<<<<< HEAD
     src/scenerule.h
+=======
+    src/boss-mode-scenario.h
+>>>>>>> origin/master
 
 FORMS += src/mainwindow.ui \
     src/connectiondialog.ui \
