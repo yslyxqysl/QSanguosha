@@ -120,9 +120,8 @@ public:
     void broadcast(const QString &msg);
     bool listen();
     void daemonize();
-    void createNewRoom();
+    Room *createNewRoom();
     void signupPlayer(ServerPlayer *player);
-    void removeRoom(Room *room);
 
 private:
     ServerSocket *server;
@@ -136,6 +135,7 @@ private slots:
     void processNewConnection(ClientSocket *socket);
     void processRequest(char *request);
     void cleanup();
+    void gameOver();
 
 signals:
     void server_message(const QString &);
