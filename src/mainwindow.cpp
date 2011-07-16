@@ -598,7 +598,6 @@ QGroupBox *MeleeDialog::createGeneralBox(){
 
 void MeleeDialog::startTest(){
     Server *server = new Server(this);
-    server->listen();
 
     Config.AIDelay = 0;
 
