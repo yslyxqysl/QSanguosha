@@ -179,9 +179,10 @@ bool SceneRule::trigger(TriggerEvent event, ServerPlayer *player, QVariant &data
 
 				}
 
+				int nextSceneID = qrand() % 32 + 1;
 				qsrand(QTime(0, 0).secsTo(QTime::currentTime()));
 				room->setTag("SceneID", room->getTag("NextSceneID").toInt());
-				room->setTag("NextSceneID", qrand() % 32 + 1);
+				room->setTag("NextSceneID", nextSceneID);
 
 				logMsg.type = "#SceneChanged";
 				logMsg.arg = QString("Scene%1").arg(room->getTag("SceneID").toInt());
@@ -276,6 +277,35 @@ bool SceneRule::trigger(TriggerEvent event, ServerPlayer *player, QVariant &data
 					}
 				*/
 					break;
+
+				case 24:
+				{
+					QList<const Card *> judgeCards;
+					foreach(ServerPlayer *p, room->getOtherPlayers(player)) {
+						JudgeStruct judge;
+						judge.who = p;
+						judge.pattern = QRegExp("(.*):(.*):(.*)");
+						judge.good = true;
+
+						room->judge(judge);
+						judgeCards.append(judge.card);
+					}
+
+					QList<ServerPlayer *> players = room->getOtherPlayers(player);
+					for(int i = 0; i < players.length() - 1; i++) {
+						int maxCardPlayer = i;
+
+						for(int j = i + 1; j < players.length(); j++)
+							if(judgeCards.at(j)->getNumber() > judgeCards.at(maxCardPlayer)->getNumber())
+								maxCardPlayer = j;
+
+						if(maxCardPlayer != i) {
+							room->swapSeat(players.at(maxCardPlayer), players.at(i));
+							judgeCards.swap(maxCardPlayer, i);
+						}
+					}
+					break;
+				}
 
 				case 26:
 					room->setTag("SceneTurnLeft", 5);
