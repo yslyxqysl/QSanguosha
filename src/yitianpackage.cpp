@@ -154,11 +154,12 @@ public:
         frequency = Compulsory;
     }
 
-    virtual bool onPhaseChange(ServerPlayer *caochong) const{
-        if(caochong->getPhase() == Player::Start)
-            caochong->skip(Player::Discard);
+    virtual bool triggerable(const ServerPlayer *target) const{
+        return PhaseChangeSkill::triggerable(target) && target->getPhase() == Player::Discard;
+    }
 
-        return false;
+    virtual bool onPhaseChange(ServerPlayer *) const{
+        return true;
     }
 };
 
@@ -1711,7 +1712,7 @@ public:
 class Zhengfeng: public TriggerSkill{
 public:
     Zhengfeng():TriggerSkill("zhengfeng"){
-        events << GameStart << CardLost;
+        events << GameStart << CardLost << HpChanged;
     }
 
     virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const{
@@ -1726,6 +1727,8 @@ public:
                 if(equip && equip->location() == EquipCard::WeaponLocation)
                     room->setPlayerProperty(player, "atk", player->getHp());
             }
+        }else if(event == HpChanged && player->getWeapon() == NULL){
+            room->setPlayerProperty(player, "atk", player->getHp());
         }
 
         return false;

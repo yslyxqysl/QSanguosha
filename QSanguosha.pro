@@ -149,7 +149,8 @@ HEADERS += src/mainwindow.h \
     src/zombie-mode-scenario.h \
     src/generalselector.h \
     src/packagingeditor.h \
-    src/scenerule.h
+    src/boss-mode-scenario.h \
+    src/mountainpackage.h
 
 FORMS += src/mainwindow.ui \
     src/connectiondialog.ui \

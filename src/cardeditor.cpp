@@ -494,6 +494,8 @@ CardScene::CardScene()
 
     resetPhoto();
 
+    QGraphicsItemGroup *magatama_group = new QGraphicsItemGroup(NULL, this);
+
     int i;
     for(i=0; i<10; i++){
         QGraphicsPixmapItem *item = new QGraphicsPixmapItem;
@@ -502,7 +504,11 @@ CardScene::CardScene()
         addItem(item);
 
         item->setPos(94 + i*(115-94), 18);
+
+        magatama_group->addToGroup(item);
     }
+
+    magatama_group->setFlag(QGraphicsItem::ItemIsMovable);
 
     loadConfig();
 
@@ -556,7 +562,8 @@ void CardScene::setFrame(const QString &kingdom, bool is_lord){
     frame->setPixmap(QPixmap(path));
 
     foreach(QGraphicsPixmapItem *item, magatamas){
-        item->setPixmap(QPixmap(QString("diy/%1-magatama.png").arg(kingdom)));
+        item->setPixmap(QPixmap(QString("diy/%1-magatama.png")
+                                .arg(is_lord ? "god" : kingdom)));
     }
 
     skill_box->setKingdom(kingdom);
