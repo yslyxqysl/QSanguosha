@@ -26,6 +26,7 @@ return {
 	["#Xiangle"] = "%to 的锁定技【享乐】被触发， %from 必须再额外弃掉一张基本牌才能使杀生效",
 	["#Fangquan"] = "%from 使用了放权，%to 将进行一个额外的回合",
 	["#RuoyuWake"] = "%from 的体力值(%arg)为场上为低，若愚觉醒技触发",
+	["@xiangle-discard"] = "你必须再弃掉一张基本牌才能使此杀生效",
 	
 	["jiangwei"] = "姜维",
 	["tiaoxin"] = "挑衅",
@@ -39,7 +40,11 @@ return {
 	["hunzi"] = "魂姿",
 	[":hunzi"] = "<b>觉醒技</b>,回合开始阶段,若你的体力为1,你须减1点体力上限,并永久获得技能”英姿”和”英魂”.",
 	["sunce_zhiba"] = "制霸",
+	["zhiba_pindian"] = "制霸拼点",
 	[":sunce_zhiba"] = "<b>主公技</b>,其他吴势力角色的出牌阶段,可与你进行一次拼点,若该角色没赢,你可以获得双方拼点的牌;你的觉醒技发动后,你可以拒绝此拼点.每回合限一次",
+	["#HunzhiWake"] = "%from 的体力为1，触发了觉醒技【魂姿】",
+	["zhiba_pindian:accept"] = "接受",
+	["zhiba_pindian:reject"] = "拒绝",
 
 	["erzhang"] = "张昭张纮",
 	["zhijian"] = "直谏",
