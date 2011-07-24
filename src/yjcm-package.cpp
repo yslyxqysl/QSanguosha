@@ -398,17 +398,20 @@ public:
 class Xuanfeng: public TriggerSkill{
 public:
     Xuanfeng():TriggerSkill("xuanfeng"){
-        events << CardLost;
+        events << CardLost << CardLostDone;
     }
 
     virtual QString getDefaultChoice(ServerPlayer *) const{
         return "nothing";
     }
 
-    virtual bool trigger(TriggerEvent , ServerPlayer *lingtong, QVariant &data) const{
-        CardMoveStar move = data.value<CardMoveStar>();
-
-        if(move->from_place == Player::Equip){
+    virtual bool trigger(TriggerEvent event, ServerPlayer *lingtong, QVariant &data) const{
+        if(event == CardLost){
+            CardMoveStar move = data.value<CardMoveStar>();
+            if(move->from_place == Player::Equip)
+                lingtong->tag["InvokeXuanfeng"] = true;
+        }else if(event == CardLostDone && lingtong->tag.value("InvokeXuanfeng", false).toBool()){
+            lingtong->tag.remove("InvokeXuanfeng");
             Room *room = lingtong->getRoom();
 
             QString choice = room->askForChoice(lingtong, objectName(), "slash+damage+nothing");
@@ -891,6 +894,8 @@ YJCMPackage::YJCMPackage():Package("YJCM"){
     caozhi->addSkill(new Jiushi);
     caozhi->addSkill(new JiushiFlip);
 
+    related_skills.insertMulti("jiushi", "#jiushi-flip");
+
     General *yujin = new General(this, "yujin", "wei");
     yujin->addSkill(new Yizhong);
 
@@ -920,6 +925,8 @@ YJCMPackage::YJCMPackage():Package("YJCM"){
     chengong->addSkill(new Zhichi);
     chengong->addSkill(new ZhichiClear);
     chengong->addSkill(new Mingce);
+
+    related_skills.insertMulti("zhichi", "#zhichi-clear");
 
     General *gaoshun = new General(this, "gaoshun", "qun");
     gaoshun->addSkill(new Xianzhen);

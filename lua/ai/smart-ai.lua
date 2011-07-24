@@ -598,13 +598,6 @@ function SmartAI:filterEvent(event, player, data)
 			end
 			self.room:output(eachTo:objectName())
 		end
-	elseif event == sgs.CardDiscarded then
-		local card = data:toCard()
-		local cards= card:getSubcards()
-		if type(cards)=="QList" then
-			cards=sgs.QList2Table(cards)
-			self.room:output(player:getGeneralName().." discards "..table.concat(cards,"+"))
-		end
 	elseif event == sgs.CardLost then
 		local move=data:toCardMove()
 		local from=move.from
@@ -2785,6 +2778,18 @@ function SmartAI:hasSameEquip(card)
 	end
 	return false
 end
+
+sgs.lose_equip_skill = "xiaoji|xuanfeng"
+
+function SmartAI:hasSkills(skill_names, player)
+	player = player or self.player
+	for _, skill_name in ipairs(skill_names:split("|")) do
+		if player:hasSkill(skill_name) then
+			return true
+		end
+	end
+end
+
 
 function SmartAI:askForGuanxing(cards, up_only)
 	--zhugeliang

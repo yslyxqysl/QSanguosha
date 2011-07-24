@@ -895,13 +895,17 @@ public:
         frequency = Frequent;
     }
 
-    virtual bool trigger(TriggerEvent , ServerPlayer *luxun, QVariant &) const{
+    virtual bool trigger(TriggerEvent , ServerPlayer *luxun, QVariant &data) const{
         if(luxun->isKongcheng()){
-            Room *room = luxun->getRoom();
-            if(room->askForSkillInvoke(luxun, objectName())){
-                room->playSkillEffect(objectName());
+            CardMoveStar move = data.value<CardMoveStar>();
 
-                luxun->drawCards(1);
+            if(move->from_place == Player::Hand){
+                Room *room = luxun->getRoom();
+                if(room->askForSkillInvoke(luxun, objectName())){
+                    room->playSkillEffect(objectName());
+
+                    luxun->drawCards(1);
+                }
             }
         }
 
@@ -1302,6 +1306,8 @@ void StandardPackage::addGenerals(){
     xuchu->addSkill(new Luoyi);
     xuchu->addSkill(new LuoyiBuff);
 
+    related_skills.insertMulti("luoyi", "#luoyi");
+
     zhenji = new General(this, "zhenji", "wei", 3, false);
     zhenji->addSkill(new Luoshen);
     zhenji->addSkill(new Qingguo);
@@ -1329,6 +1335,8 @@ void StandardPackage::addGenerals(){
     zhugeliang->addSkill(new Kongcheng);
     zhugeliang->addSkill(new KongchengEffect);
 
+    related_skills.insertMulti("kongcheng", "#kongcheng-effect");
+
     huangyueying = new General(this, "huangyueying", "shu", 3, false);
     huangyueying->addSkill(new Jizhi);
     huangyueying->addSkill(new Skill("qicai", Skill::Compulsory));
@@ -1345,6 +1353,8 @@ void StandardPackage::addGenerals(){
     lumeng = new General(this, "lumeng", "wu");
     lumeng->addSkill(new Keji);
     lumeng->addSkill(new KejiSkip);
+
+    related_skills.insertMulti("keji", "#keji-skip");
 
     luxun = new General(this, "luxun", "wu", 3);
     luxun->addSkill(new Qianxun);

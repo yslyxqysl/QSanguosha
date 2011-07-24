@@ -367,8 +367,17 @@ void Room::attachSkillToPlayer(ServerPlayer *player, const QString &skill_name){
 }
 
 void Room::detachSkillFromPlayer(ServerPlayer *player, const QString &skill_name){
+    if(!player->hasSkill(skill_name))
+        return;
+
     player->loseSkill(skill_name);
     player->invoke("detachSkill", skill_name);
+
+    const Skill *skill = Sanguosha->getSkill(skill_name);
+    if(skill && skill->isVisible()){
+        foreach(const Skill *skill, Sanguosha->getRelatedSkills(skill_name))
+            detachSkillFromPlayer(player, skill->objectName());
+    }
 }
 
 bool Room::obtainable(const Card *card, ServerPlayer *player){
@@ -1058,7 +1067,12 @@ void Room::timerEvent(QTimerEvent *event){
 
             connect(hulao_thread, SIGNAL(finished()), this, SLOT(startGame()));
         }else{
-            QStringList lord_list = Sanguosha->getRandomLords();
+            QStringList lord_list;
+            if(mode == "08same")
+                lord_list = Sanguosha->getRandomGenerals(Config.value("MaxChoice", 5).toInt());
+            else
+                lord_list = Sanguosha->getRandomLords();
+
             QString default_lord = lord_list[qrand() % lord_list.length()];
 
             ServerPlayer *the_lord = getLord();
@@ -2056,6 +2070,8 @@ void Room::moveCardTo(const Card *card, ServerPlayer *to, Player::Place place, b
     move.to_place = place;
     move.open = open;
 
+    ServerPlayer *from = NULL;
+
     if(card->isVirtualCard()){
         QList<int> subcards = card->getSubcards();
         foreach(int subcard, subcards){
@@ -2063,13 +2079,22 @@ void Room::moveCardTo(const Card *card, ServerPlayer *to, Player::Place place, b
             move.from = getCardOwner(subcard);
             move.from_place = getCardPlace(subcard);
             doMove(move, scope);
+
+            if(move.from)
+                from = move.from;
         }
     }else{
         move.card_id = card->getId();
         move.from = getCardOwner(move.card_id);
         move.from_place = getCardPlace(move.card_id);
         doMove(move, scope);
+
+        if(move.from)
+            from = move.from;
     }
+
+    if(from)
+        thread->trigger(CardLostDone, from);
 }
 
 void Room::doMove(const CardMoveStruct &move, const QSet<ServerPlayer *> &scope){
@@ -2198,6 +2223,9 @@ void Room::getResult(const QString &reply_func, ServerPlayer *reply_player, bool
 
 void Room::acquireSkill(ServerPlayer *player, const Skill *skill, bool open){
     QString skill_name = skill->objectName();
+    if(player->hasSkill(skill_name))
+        return;
+
     player->acquireSkill(skill_name);
 
     if(skill->inherits("TriggerSkill")){
@@ -2205,9 +2233,15 @@ void Room::acquireSkill(ServerPlayer *player, const Skill *skill, bool open){
         thread->addTriggerSkill(trigger_skill);
     }
 
-    if(open){
-        QString acquire_str = QString("%1:%2").arg(player->objectName()).arg(skill_name);
-        broadcastInvoke("acquireSkill", acquire_str);
+    if(skill->isVisible()){
+        if(open){
+            QString acquire_str = QString("%1:%2").arg(player->objectName()).arg(skill_name);
+            broadcastInvoke("acquireSkill", acquire_str);
+        }
+
+        foreach(const Skill *related_skill, Sanguosha->getRelatedSkills(skill_name)){
+            acquireSkill(player, related_skill);
+        }
     }
 }
 
@@ -2368,8 +2402,10 @@ bool Room::askForDiscard(ServerPlayer *target, const QString &reason, int discar
     CardStar card_star = dummy_card;
     QVariant data = QVariant::fromValue(card_star);
     thread->trigger(CardDiscarded, target, data);
+
     data=QString("%1:%2").arg("cardDiscard").arg(dummy_card->toString());
     thread->trigger(ChoiceMade, target, data);
+
     dummy_card->deleteLater();
 
     return true;

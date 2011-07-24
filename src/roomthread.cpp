@@ -4,6 +4,8 @@
 #include "gamerule.h"
 #include "ai.h"
 
+#include <QTime>
+
 LogMessage::LogMessage()
     :from(NULL)
 {
@@ -222,6 +224,8 @@ void RoomThread::action3v3(ServerPlayer *player){
 }
 
 void RoomThread::run(){
+    qsrand(QTime(0,0,0).secsTo(QTime::currentTime()));
+
     if(setjmp(env) == GameOver){
         quit();
         return;
@@ -317,8 +321,10 @@ bool RoomThread::trigger(TriggerEvent event, ServerPlayer *target, QVariant &dat
         }
     }
 
-    foreach(AI *ai, room->ais)
-        ai->filterEvent(event, target, data);
+    if(target){
+        foreach(AI *ai, room->ais)
+            ai->filterEvent(event, target, data);
+    }
 
     return broken;
 }
