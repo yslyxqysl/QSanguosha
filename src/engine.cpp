@@ -48,6 +48,11 @@ extern "C" {
     Scenario *NewCoupleScenario();
     Scenario *NewHongyanScenario();
     Scenario *NewZombieScenario();
+<<<<<<< HEAD
+=======
+    Scenario *NewLegendScenario();
+    Scenario *NewImpasseScenario();
+>>>>>>> a42e39f471326c3bc34003be0312dd00f1b2e0b6
 }
 
 extern "C" {
@@ -83,6 +88,11 @@ Engine::Engine()
     addScenario(NewCoupleScenario());
     addScenario(NewHongyanScenario());
     addScenario(NewZombieScenario());
+<<<<<<< HEAD
+=======
+    addScenario(NewLegendScenario());
+    addScenario(NewImpasseScenario());
+>>>>>>> a42e39f471326c3bc34003be0312dd00f1b2e0b6
 
     // available game modes
     modes["02p"] = tr("2 players");
