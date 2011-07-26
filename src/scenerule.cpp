@@ -366,6 +366,23 @@ bool SceneRule::trigger(TriggerEvent event, ServerPlayer *player, QVariant &data
 		}
 		break;
 
+	case CardUsed:
+	{
+		CardUseStruct use = data.value<CardUseStruct>();
+		switch(room->getTag("SceneID").toInt()) {
+		case 16:
+			if(use.card->inherits("Peach") && player->getPhase() == Player::Play) {
+				ServerPlayer *effectTo = room->askForPlayerChosen(player, room->getOtherPlayers(player), "Scene16");
+				RecoverStruct recover;
+				recover.who = effectTo;
+				recover.card = use.card;
+				return true;
+			}
+			break;
+		}
+		break;
+	}
+
 	case CardEffect:
 	{
 		CardEffectStruct effect = data.value<CardEffectStruct>();
@@ -374,18 +391,7 @@ bool SceneRule::trigger(TriggerEvent event, ServerPlayer *player, QVariant &data
 			if(effect.card->inherits("TrickCard") && !effect.card->inherits("DelayedTrick"))
 				return true;
 			break;
-
-		case 16:
-			if(effect.card->inherits("Peach") && player->getPhase() == Player::Play) {
-				ServerPlayer *effectTo = room->askForPlayerChosen(player, room->getOtherPlayers(player), "Scene16");
-				RecoverStruct recover;
-				recover.who = effectTo;
-				recover.card = effect.card;
-				return true;
-			}
-			break;
 		}
-		break;
 	}
 
 	case Predamaged:
@@ -397,11 +403,14 @@ bool SceneRule::trigger(TriggerEvent event, ServerPlayer *player, QVariant &data
 
 		case 14:
 			if(damage.nature == DamageStruct::Fire) {
+				const Card *card;
 				foreach(ServerPlayer *p, room->getAlivePlayers()) {
-					const Card *card = room->askForCard(p, "fire_slash", "scene_14_prompt");
-					if(card) {
+					while(card = room->askForCard(p, "fire_slash", "scene_14_prompt_fs"))
 						damage.damage++;
-					}
+				}
+				foreach(ServerPlayer *p, room->getAlivePlayers()) {
+					while(card = room->askForCard(p, "fire_attack", "scene_14_prompt_fa"))
+						damage.damage++;
 				}
 			}
 			data = QVariant::fromValue(damage);
