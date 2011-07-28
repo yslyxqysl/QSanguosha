@@ -76,9 +76,9 @@ SOURCES += src/main.cpp \
     src/generalselector.cpp \
     src/packagingeditor.cpp \
     src/boss-mode-scenario.cpp \
-    src/scenerule.cpp \
     src/legend-mode-scenario.cpp \
-    src/mountainpackage.cpp
+    src/mountainpackage.cpp \
+    src/scenerule.cpp
 
 HEADERS += src/mainwindow.h \
     src/button.h \
@@ -151,9 +151,9 @@ HEADERS += src/mainwindow.h \
     src/generalselector.h \
     src/packagingeditor.h \
     src/boss-mode-scenario.h \
-    src/scenerule.h \
     src/legend-mode-scenario.h \
-    src/mountainpackage.h
+    src/mountainpackage.h \
+    src/scenerule.h
 
 FORMS += src/mainwindow.ui \
     src/connectiondialog.ui \
