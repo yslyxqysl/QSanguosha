@@ -194,6 +194,8 @@ bool SceneRule::trigger(TriggerEvent event, ServerPlayer *player, QVariant &data
 				logMsg.arg2 = QString("Scene%1Effect").arg(room->getTag("NextSceneID").toInt());
 				room->sendLog(logMsg);
 
+				room->getThread()->delay();
+
 				switch(room->getTag("SceneID").toInt()) {
 				case 1:
 					foreach(ServerPlayer *p, room->getAlivePlayers()) {
@@ -248,8 +250,7 @@ bool SceneRule::trigger(TriggerEvent event, ServerPlayer *player, QVariant &data
 					}
 					break;
 
-				case 23:
-				/*
+				case 23: /*
 					foreach(ServerPlayer *p, room->getAlivePlayers()) {
 						const Card *card1;
 						if(p->isKongcheng())
@@ -275,8 +276,7 @@ bool SceneRule::trigger(TriggerEvent event, ServerPlayer *player, QVariant &data
 								p->drawCards(1);
 						}
 					}
-				*/
-					break;
+					break;*/
 
 				case 24:
 				{
@@ -343,6 +343,38 @@ bool SceneRule::trigger(TriggerEvent event, ServerPlayer *player, QVariant &data
 					}
 					break;
 
+				case 31:
+				{
+					QList<ServerPlayer *> affectedPlayers;
+					QList<int> cardList;
+					foreach(ServerPlayer *p, room->getAlivePlayers()) {
+						if(!p->isKongcheng()) {
+							int card = room->askForPindian(p, room->getLord(), p, "scene_31_eff")->getId();
+							int indexToInsert = cardList.length();
+							foreach(int c, cardList)
+								if(Sanguosha->getCard(c)->getNumber() < Sanguosha->getCard(card)->getNumber()) {
+									indexToInsert = cardList.indexOf(c);
+									break;
+								}
+							affectedPlayers.insert(indexToInsert, p);
+							cardList.insert(indexToInsert, card);
+						}
+					}
+
+					foreach(int card, cardList) {
+						room->throwCard(card);
+					}
+
+					room->fillAG(cardList);
+					foreach(ServerPlayer *p, affectedPlayers) {
+						int card = room->askForAG(p, cardList, false, "amazing_grace");
+						cardList.removeAt(cardList.indexOf(card));
+						room->takeAG(p->getNextAlive(), card);
+					}
+					room->broadcastInvoke("clearAG");
+					break;
+				}
+
 				case 32:
 					room->setTag("SceneTurnLeft", 1);
 					break;
@@ -376,6 +408,14 @@ bool SceneRule::trigger(TriggerEvent event, ServerPlayer *player, QVariant &data
 				RecoverStruct recover;
 				recover.who = effectTo;
 				recover.card = use.card;
+
+				LogMessage log;
+				log.type = "#Scene16Recover";
+				log.from = player;
+				log.to << effectTo;
+				room->sendLog(log);
+
+				room->throwCard(use.card);
 				return true;
 			}
 			break;
@@ -388,47 +428,81 @@ bool SceneRule::trigger(TriggerEvent event, ServerPlayer *player, QVariant &data
 		CardEffectStruct effect = data.value<CardEffectStruct>();
 		switch(room->getTag("SceneID").toInt()) {
 		case 7:
-			if(effect.card->inherits("TrickCard") && !effect.card->inherits("DelayedTrick"))
+			if(effect.card->inherits("TrickCard") && !effect.card->inherits("DelayedTrick")) {
+				LogMessage log;
+				log.type = "#Scene7CardInvalid";
+				log.from = player;
+				room->sendLog(log);
+
 				return true;
+			}
 			break;
 		}
 	}
 
 	case Predamaged:
 	{
+		LogMessage log;
 		DamageStruct damage = data.value<DamageStruct>();
 		switch(room->getTag("SceneID").toInt()) {
 		case 5:
+			log.type = "#Scene5NoDamage";
+			log.from = player;
+			log.to << damage.to;
+			room->sendLog(log);
 			return true;
 
 		case 14:
+		{
+			int damage_old = damage.damage;
 			if(damage.nature == DamageStruct::Fire) {
 				const Card *card;
-				foreach(ServerPlayer *p, room->getAlivePlayers()) {
-					while(card = room->askForCard(p, "fire_slash", "scene_14_prompt_fs"))
+				foreach(ServerPlayer *p, room->getOtherPlayers(player)) {
+					while((card = room->askForCard(p, "fire_slash", "scene_14_prompt_fs")) != NULL)
 						damage.damage++;
 				}
-				foreach(ServerPlayer *p, room->getAlivePlayers()) {
-					while(card = room->askForCard(p, "fire_attack", "scene_14_prompt_fa"))
+				foreach(ServerPlayer *p, room->getOtherPlayers(player)) {
+					while((card = room->askForCard(p, "fire_attack", "scene_14_prompt_fa")) != NULL)
 						damage.damage++;
 				}
 			}
+
+			log.type = "#Scene14Buff";
+			log.from = player;
+			log.to << damage.to;
+			log.arg = QString::number(damage_old);
+			log.arg2 = QString::number(damage.damage);
+			room->sendLog(log);
+
 			data = QVariant::fromValue(damage);
 			break;
+		}
 
 		case 17:
 			room->loseHp(player->getNextAlive(), damage.damage);
+
+			log.type = "#Scene17NoDamage";
+			log.from = player;
+			log.to << damage.to;
+			room->sendLog(log);
+
+			log.type = "#Scene17LoseHp";
+			log.from = damage.to;
+			log.to.clear();
+			log.to << player->getNextAlive();
+			log.arg = damage.damage;
+			room->sendLog(log);
+
 			return true;
 
 		case 20:
 			if((damage.nature == DamageStruct::Thunder) && damage.chain == false) {
-				LogMessage log;
 				log.type = "#Scene20Buff";
 				log.from = player;
 				log.to << damage.to;
 				log.arg = QString::number(damage.damage);
 				log.arg2 = QString::number(damage.damage + 1);
-				player->getRoom()->sendLog(log);
+				room->sendLog(log);
 
 				damage.damage++;
 				data = QVariant::fromValue(damage);
@@ -437,13 +511,12 @@ bool SceneRule::trigger(TriggerEvent event, ServerPlayer *player, QVariant &data
 
 		case 21:
 			if((damage.nature == DamageStruct::Fire) && damage.chain == false) {
-				LogMessage log;
 				log.type = "#Scene21Buff";
 				log.from = player;
 				log.to << damage.to;
 				log.arg = QString::number(damage.damage);
 				log.arg2 = QString::number(damage.damage + 1);
-				player->getRoom()->sendLog(log);
+				room->sendLog(log);
 
 				damage.damage++;
 				data = QVariant::fromValue(damage);
@@ -452,13 +525,12 @@ bool SceneRule::trigger(TriggerEvent event, ServerPlayer *player, QVariant &data
 
 		case 22:
 			if((damage.nature == DamageStruct::Thunder || damage.nature == DamageStruct::Fire) && damage.chain == false) {
-				LogMessage log;
 				log.type = "#Scene22Buff";
 				log.from = player;
 				log.to << damage.to;
 				log.arg = QString::number(damage.damage);
 				log.arg2 = QString::number(damage.damage + 1);
-				player->getRoom()->sendLog(log);
+				room->sendLog(log);
 
 				damage.damage++;
 				data = QVariant::fromValue(damage);
@@ -474,8 +546,15 @@ bool SceneRule::trigger(TriggerEvent event, ServerPlayer *player, QVariant &data
 		switch(room->getTag("SceneID").toInt()) {
 		case 15:
 			if(damage.card && damage.card->inherits("Slash") && damage.nature == DamageStruct::Normal)
-				if(!player->isKongcheng())
+				if(!player->isKongcheng()) {
+					LogMessage log;
+					log.type = "#Scene15NeedDiscard";
+					log.from = player;
+					log.to << damage.to;
+					room->sendLog(log);
+
 					room->askForDiscard(player, "", 1);
+				}
 			break;
 		}
 		break;
