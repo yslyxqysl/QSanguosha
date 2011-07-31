@@ -159,6 +159,8 @@ void StartScene::printServerInfo(){
 
     if(Config.EnableScene)
         server_log->append(tr("Scene Mode is enabled"));
+    else
+        server_log->append(tr("Scene Mode is disabled"));
 
     if(Config.EnableAI)
         server_log->append(tr("This server is AI enabled, AI delay is %1 milliseconds").arg(Config.AIDelay));
