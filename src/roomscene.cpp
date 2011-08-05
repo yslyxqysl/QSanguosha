@@ -1373,8 +1373,11 @@ void RoomScene::enableTargets(const Card *card){
     }
 
     if(card == NULL){
+        bool inactive = ClientInstance->getStatus() == Client::NotActive;
         foreach(QGraphicsItem *item, item2player.keys()){
-            item->setOpacity(0.7);
+            if(!inactive)
+                item->setOpacity(0.7);
+
             item->setFlag(QGraphicsItem::ItemIsSelectable, false);
         }
 
@@ -2198,8 +2201,11 @@ void RoomScene::onGameOver(){
         win_effect = "win";
         foreach(const Player *player, ClientInstance->getPlayers()){
             if(player->property("win").toBool() && player->isCaoCao()){
+
+#ifdef Q_OS_WIN
                 if(SoundEngine)
                     SoundEngine->stopAllSounds();
+#endif
 
                 win_effect = "win-cc";
                 break;
@@ -2602,7 +2608,7 @@ void RoomScene::detachSkill(const QString &skill_name){
             button->deleteLater();
             itor.remove();
 
-            return;
+            break;
         }
     }
 

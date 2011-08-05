@@ -774,6 +774,8 @@ public:
         if(effect.card->inherits("Slash")){
             Room *room = player->getRoom();
 
+            room->playSkillEffect(objectName());
+
             LogMessage log;
             log.type = "#Xiangle";
             log.from = effect.from;
@@ -816,6 +818,12 @@ public:
                     room->askForDiscard(liushan, "fangquan", 1);
 
                     ServerPlayer *player = room->askForPlayerChosen(liushan, room->getOtherPlayers(liushan), objectName());
+
+                    QString name = player->getGeneralName();
+                    if(name == "zhugeliang" || name == "shenzhugeliang" || name == "wolong")
+                        room->playSkillEffect("fangquan", 1);
+                    else
+                        room->playSkillEffect("fangquan", 2);
 
                     LogMessage log;
                     log.type = "#Fangquan";
@@ -863,6 +871,8 @@ public:
         }
 
         if(can_invoke){
+            room->playSkillEffect(objectName());
+
             LogMessage log;
             log.type = "#RuoyuWake";
             log.from = liushan;
@@ -920,7 +930,7 @@ public:
 
         static QSet<QString> banned;
         if(banned.isEmpty()){
-            banned << "zuoci" << "zuocif" << "guzhielai" << "dengshizai";
+            banned << "zuoci" << "zuocif" << "guzhielai" << "dengshizai" << "caochong";
         }
 
         return (all - banned - huashen_set - room_set).toList();
