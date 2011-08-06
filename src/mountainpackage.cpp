@@ -559,7 +559,7 @@ bool TiaoxinCard::targetFilter(const QList<const Player *> &targets, const Playe
 void TiaoxinCard::onEffect(const CardEffectStruct &effect) const{
     Room *room = effect.from->getRoom();
 
-    const Card *slash = room->askForCard(effect.to, "slash", "@tiaoxin-slash");
+    const Card *slash = room->askForCard(effect.to, "slash", "@tiaoxin-slash:" + effect.from->objectName());
 
     if(slash){
         CardUseStruct use;
@@ -950,8 +950,12 @@ public:
 
         QString general_name = room->askForGeneral(zuoci, huashen_generals);
         const General *general = Sanguosha->getGeneral(general_name);
-        if(zuoci->getKingdom() != general->getKingdom())
-            room->setPlayerProperty(zuoci, "kingdom", general->getKingdom());
+        QString kingdom = general->getKingdom();
+        if(zuoci->getKingdom() != kingdom){
+            if(kingdom == "god")
+                kingdom = room->askForKingdom(zuoci);
+            room->setPlayerProperty(zuoci, "kingdom", kingdom);
+        }
         if(zuoci->getGeneral()->isMale() != general->isMale())
             room->setPlayerProperty(zuoci, "general", general->isMale() ? "zuoci" : "zuocif");
 
