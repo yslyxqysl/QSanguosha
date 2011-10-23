@@ -1,3 +1,58 @@
+sgs.dynamic_value = {
+	damage_card = 
+	{
+		Duel = true,
+		ArcheryAttack = true,
+		Slash = true,
+		FireAttack = true,
+		SavageAssault = true,
+		
+		QiangxiCard = true,
+		FanjianCard = true,
+		LijianCard = true,
+		LuanwuCard = true,
+		ShenfenCard = true,
+	},
+	control_usecard = 
+	{
+		Indulgence = true,
+		SupplyShortage = true,
+	},
+	control_card = 
+	{
+		Snatch = true,
+		Dismantlement = true,
+		Collateral = true,
+		
+		GaleShell = true,
+		
+		TianyiCard = true,
+		XianzhenCard = true,
+		DimengCard = true,
+		JixiCard = true,
+		GanluCard = true,
+		QuhuCard = true,
+		ShenfenCard = true,
+	},
+	lucky_chance = 
+	{
+		Lightning = true,
+	},
+	benefit = 
+	{
+		Peach = true,
+		Analeptic = true,
+		IronChain = true,
+		Exnihilo = true,
+		
+		RendeCard = true,
+		JieyinCard = true,
+		QingnangCard = true,
+		JujianCard = true,
+		ZhihengCard = true,
+	},
+}
+
 sgs.zhangfei_keep_value = 
 {
 Shit = 6,
@@ -101,7 +156,18 @@ DefensiveHorse = 5,
 OffensiveHorse = 5
 }
 
+sgs.shenzhaoyun_suit_value = 
+{
+heart = 6.7,
+spade = 5,
+club = 4.2,
+diamond = 3.9,
+}
 
+sgs.dongzhuo_suit_value = 
+{
+spade = 5,
+}
 
 sgs.xiaoqiao_suit_value = 
 {
