@@ -250,8 +250,12 @@ bool SceneRule::trigger(TriggerEvent event, ServerPlayer *player, QVariant &data
 
                 case 18:
                     foreach(ServerPlayer *p, room->getAlivePlayers()) {
-                        if(!p->isKongcheng())
-                            room->askForDiscard(p, "", 1);
+                        if(!p->isKongcheng()) {
+                            if(p->getHandcardNum() == 1)
+                                p->throwAllHandCards();
+                            else
+                                room->askForDiscard(p, "scene_18_eff", 1);
+                        }
                     }
                     break;
 
@@ -328,8 +332,12 @@ bool SceneRule::trigger(TriggerEvent event, ServerPlayer *player, QVariant &data
                                 } else {
                                     if(nextAlivePlayer->isKongcheng())
                                         room->loseHp(nextAlivePlayer);
-                                    else
-                                        room->askForDiscard(nextAlivePlayer, "Scene29", 1);
+                                    else {
+                                        if(p->getHandcardNum() == 1)
+                                            p->throwAllHandCards();
+                                        else
+                                            room->askForDiscard(nextAlivePlayer, "Scene29", 1);
+                                    }
                                 }
                             } else {
                                 if(room->askForChoice(nextAlivePlayer, "scene_29_eff", "dscorlose+recover") == "recover")
@@ -340,8 +348,12 @@ bool SceneRule::trigger(TriggerEvent event, ServerPlayer *player, QVariant &data
                                 } else {
                                     if(p->isKongcheng())
                                         room->loseHp(p);
-                                    else
-                                        room->askForDiscard(p, "Scene29", 1);
+                                    else {
+                                        if(p->getHandcardNum() == 1)
+                                            p->throwAllHandCards();
+                                        else
+                                            room->askForDiscard(p, "Scene29", 1);
+                                    }
                                 }
                             }
                         }
@@ -563,7 +575,10 @@ bool SceneRule::trigger(TriggerEvent event, ServerPlayer *player, QVariant &data
                     log.to << damage.to;
                     room->sendLog(log);
 
-                    room->askForDiscard(player, "", 1);
+                    if(player->getHandcardNum() == 1)
+                        player->throwAllHandCards();
+                    else
+                        room->askForDiscard(player, "scene_15_eff", 1);
                 }
             break;
         }
