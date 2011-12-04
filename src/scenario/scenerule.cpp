@@ -185,6 +185,7 @@ bool SceneRule::trigger(TriggerEvent event, ServerPlayer *player, QVariant &data
                 bannedScenesList << 2 << 3 << 9 << 19 << 23 << 25 << 27 << 28 << 30;
                 do {
                     nextSceneID = qrand() % 32 + 1;
+                    nextSceneID = 17;
                 } while(bannedScenesList.indexOf(nextSceneID) != -1);
                 room->setTag("SceneID", room->getTag("NextSceneID").toInt());
                 room->setTag("NextSceneID", nextSceneID);
@@ -456,6 +457,7 @@ bool SceneRule::trigger(TriggerEvent event, ServerPlayer *player, QVariant &data
             }
             break;
         }
+        break;
     }
 
     case Predamaged:
