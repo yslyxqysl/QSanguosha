@@ -103,6 +103,8 @@ table.insert(sgs.ai_skills, luanwu_skill)
 luanwu_skill.getTurnUseCard=function(self)
 	if self.player:getMark("@chaos") <= 0 then return end
 	local good, bad = 0, 0
+	local lord = self.room:getLord()
+	if self:isFriend(lord) and self:isWeak(lord) then return end
 	for _, player in sgs.qlist(self.room:getOtherPlayers(self.player)) do
 		if self:isWeak(player) then
 			if self:isFriend(player) then bad = bad + 1
@@ -147,3 +149,5 @@ end
 sgs.ai_skill_use_func["LuanwuCard"]=function(card,use,self)
 	use.card = card
 end
+
+sgs.ai_skill_playerchosen.luanwu = sgs.ai_skill_playerchosen.zero_card_as_slash

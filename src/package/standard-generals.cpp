@@ -359,7 +359,6 @@ public:
         if(event == PhaseChange && zhenji->getPhase() == Player::Start){
             Room *room = zhenji->getRoom();
             while(zhenji->askForSkillInvoke("luoshen")){
-                zhenji->setFlags("luoshen");
                 room->playSkillEffect(objectName());
 
                 JudgeStruct judge;
@@ -373,10 +372,9 @@ public:
                     break;
             }
 
-            zhenji->setFlags("-luoshen");
         }else if(event == FinishJudge){
-            if(zhenji->hasFlag("luoshen")){
-                JudgeStar judge = data.value<JudgeStar>();
+            JudgeStar judge = data.value<JudgeStar>();
+            if(judge->reason == objectName()){
                 if(judge->card->isBlack()){
                     zhenji->obtainCard(judge->card);
                     return true;
@@ -395,7 +393,7 @@ public:
     }
 
     virtual bool viewFilter(const CardItem *to_select) const{
-        return to_select->getCard()->isBlack() && !to_select->isEquipped();
+        return to_select->getFilteredCard()->isBlack() && !to_select->isEquipped();
     }
 
     virtual const Card *viewAs(CardItem *card_item) const{
@@ -1023,25 +1021,6 @@ public:
     }
 };
 
-class Chujia: public GameStartSkill{
-public:
-    Chujia():GameStartSkill("chujia"){
-        frequency = Limited;
-    }
-
-    virtual bool triggerable(const ServerPlayer *target) const{
-        return GameStartSkill::triggerable(target) && target->getGeneralName() == "sunshangxiang";
-    }
-
-    virtual void onGameStart(ServerPlayer *player) const{
-        if(player->askForSkillInvoke(objectName())){
-            Room *room = player->getRoom();
-            room->transfigure(player, "sp_sunshangxiang", true, false);
-            room->setPlayerProperty(player, "kingdom", "shu");
-        }
-    }
-};
-
 class Jieyin: public ViewAsSkill{
 public:
     Jieyin():ViewAsSkill("jieyin"){
@@ -1314,6 +1293,7 @@ void StandardPackage::addGenerals(){
     machao = new General(this, "machao", "shu");
     machao->addSkill(new Tieji);
     machao->addSkill(new Mashu);
+    machao->addSkill(new SPConvertSkill("fanqun", "machao", "sp_machao"));
 
     huangyueying = new General(this, "huangyueying", "shu", 3, false);
     huangyueying->addSkill(new Jizhi);
@@ -1348,7 +1328,7 @@ void StandardPackage::addGenerals(){
     luxun->addSkill(new Lianying);
 
     sunshangxiang = new General(this, "sunshangxiang", "wu", 3, false);
-    sunshangxiang->addSkill(new Chujia);
+    sunshangxiang->addSkill(new SPConvertSkill("chujia", "sunshangxiang", "sp_sunshangxiang"));
     sunshangxiang->addSkill(new Jieyin);
     sunshangxiang->addSkill(new Xiaoji);
 

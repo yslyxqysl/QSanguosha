@@ -33,6 +33,7 @@ Client::Client(QObject *parent, const QString &filename)
     callbacks["roomEnd"] = &Client::roomEnd;
     callbacks["roomCreated"] = &Client::roomCreated;
     callbacks["roomError"] = &Client::roomError;
+    callbacks["hallEntered"] = &Client::hallEntered;
 
     callbacks["setup"] = &Client::setup;
     callbacks["addPlayer"] = &Client::addPlayer;
@@ -65,6 +66,8 @@ Client::Client(QObject *parent, const QString &filename)
     callbacks["transfigure"] = &Client::transfigure;
     callbacks["jilei"] = &Client::jilei;
     callbacks["pile"] = &Client::pile;
+
+    callbacks["updateStateItem"] = &Client::updateStateItem;
 
     callbacks["playSkillEffect"] = &Client::playSkillEffect;
     callbacks["playCardEffect"] = &Client::playCardEffect;
@@ -188,6 +191,7 @@ void Client::setup(const QString &setup_str){
 
     if(ServerInfo.parse(setup_str)){
         emit server_connected();
+        request("toggleReady .");
     }else{
         QMessageBox::warning(NULL, tr("Warning"), tr("Setup string can not be parsed: %1").arg(setup_str));
     }
@@ -619,9 +623,9 @@ void Client::askForCardOrUseCard(const QString &request_str){
     else
         refusable = true;
 
-    if(card_pattern.startsWith(QChar('@'))){
-        QString skill_name = card_pattern;
-        skill_name.remove(QChar('@'));
+    QRegExp rx("^@@?(\\w+)(-card)?$");
+    if(rx.exactMatch(card_pattern)){
+        QString skill_name = rx.capturedTexts().at(1);
         const Skill *skill = Sanguosha->getSkill(skill_name);
         if(skill){
             QString text = prompt_doc->toHtml();
@@ -1067,6 +1071,8 @@ void Client::warn(const QString &reason){
         msg = tr("Your password is wrong");
     else if(reason == "INVALID_FORMAT")
         msg = tr("Invalid signup string");
+    else if(reason == "LEVEL_LIMITATION")
+        msg = tr("Your level is not enough");
     else
         msg = tr("Unknown warning: %1").arg(reason);
 
@@ -1767,4 +1773,9 @@ void Client::selectOrder(){
     request("selectOrder " + order);
 
     setStatus(NotActive);
+}
+
+void Client::updateStateItem(const QString &state_str)
+{
+    emit role_state_changed(state_str);
 }

@@ -175,7 +175,7 @@ public:
             if(!room->askForSkillInvoke(jiangwei, objectName(), data))
                 return false;
             room->throwCard(card);
-            room->askForUseCard(jiangwei, "slash", "@yicai");
+            room->askForUseCard(jiangwei, "slash", "@askforslash");
         }
         return false;
     }
@@ -372,16 +372,15 @@ void WeidaiCard::use(Room *room, ServerPlayer *sunce, const QList<ServerPlayer *
         return;
     foreach(ServerPlayer *liege, room->getAlivePlayers()){
         if(liege->getKingdom() != "wu")
-            return;
+            continue;
         if(sunce->getHp() > 0 && sunce->hasUsed("Analeptic"))
             return;
-        QVariant to_help = QVariant::fromValue((PlayerStar)sunce);
-        if(!liege->askForSkillInvoke("weidai", to_help))
-            return;
-        const Card *analeptic = room->askForCard(liege, ".S29", "@weidai-analeptic:" + sunce->objectName());
+        QVariant tohelp = QVariant::fromValue((PlayerStar)sunce);
+        QString prompt = QString("@weidai-analeptic:%1").arg(sunce->objectName());
+        const Card *analeptic = room->askForCard(liege, ".S29", prompt, tohelp);
         if(analeptic){
             LogMessage log;
-            log.type = "$Weidai";
+            log.type = "$DiscardCard";
             log.from = liege;
             log.card_str = analeptic->getEffectIdString();
             room->sendLog(log);
@@ -454,25 +453,29 @@ public:
 class Longluo: public TriggerSkill{
 public:
     Longluo():TriggerSkill("longluo"){
-        events << PhaseChange;
+        events << CardLost << PhaseChange;
         frequency = Frequent;
     }
 
-    virtual bool triggerable(const ServerPlayer *target) const{
-        return target->hasSkill(objectName());
-    }
-
-    virtual bool trigger(TriggerEvent , ServerPlayer *player, QVariant &data) const{
+    virtual bool trigger(TriggerEvent event, ServerPlayer *player, QVariant &data) const{
         Room *room = player->getRoom();
-        if(player->getPhase() == Player::Discard){
-            player->tag["cardnum"] = player->getHandcardNum();
-        }
-        else if(player->getPhase() == Player::Finish){
-            int drawnum = player->tag.value("cardnum", 0).toInt() - player->getHandcardNum();
-            if(drawnum > 0 && player->askForSkillInvoke(objectName(), data)){
-                ServerPlayer *target = room->askForPlayerChosen(player, room->getOtherPlayers(player), objectName());
-                if(target)
+        if(event == PhaseChange){
+            if(player->getPhase() == Player::Finish){
+                int drawnum = player->getMark("longluo");
+                if(drawnum > 0 && player->askForSkillInvoke(objectName(), data)){
+                    ServerPlayer *target = room->askForPlayerChosen(player, room->getOtherPlayers(player), objectName());
                     target->drawCards(drawnum);
+                }
+            }
+            else if(player->getPhase() == Player::Discard){
+                player->setMark("longluo", 0);
+            }
+            return false;
+        }
+        if(player->getPhase() == Player::Discard){
+            CardMoveStar move = data.value<CardMoveStar>();
+            if(move->to_place == Player::DiscardedPile){
+                player->addMark("longluo");
             }
         }
         return false;
@@ -588,7 +591,7 @@ public:
         CardEffectStruct effect = data.value<CardEffectStruct>();
         if(effect.card->inherits("Slash") && effect.card->isBlack()){
             if(room->askForSkillInvoke(hua, objectName(), data)){
-                room->askForUseCard(hua, "slash", "@badao");
+                room->askForUseCard(hua, "slash", "@askforslash");
             }
         }
         return false;

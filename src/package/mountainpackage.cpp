@@ -226,6 +226,12 @@ public:
         if(damage && damage->from){
             Room *room = player->getRoom();
 
+            LogMessage log;
+            log.type = "#DuanchangLoseSkills";
+            log.from = player;
+            log.to << damage->from;
+            room->sendLog(log);
+
             QList<const Skill *> skills = damage->from->getVisibleSkillList();
             foreach(const Skill *skill, skills){
                 if(skill->parent())
@@ -244,22 +250,6 @@ public:
         }
 
         return false;
-    }
-};
-
-class Guixiang: public GameStartSkill{
-public:
-    Guixiang():GameStartSkill("guixiang"){
-        frequency = Limited;
-    }
-
-    virtual void onGameStart(ServerPlayer *player) const{
-        if(player->getGeneralName() == "caiwenji"
-           && player->askForSkillInvoke(objectName()))
-        {
-            player->getRoom()->setPlayerProperty(player, "general", "sp_caiwenji");
-            player->getRoom()->setPlayerProperty(player, "kingdom", "wei");
-        }
     }
 };
 
@@ -291,7 +281,7 @@ public:
         if(event == CardLost){
             CardMoveStar move = data.value<CardMoveStar>();
 
-            if(move->from_place == Player::Hand || move->from_place == Player::Equip)
+            if((move->from_place == Player::Hand || move->from_place == Player::Equip) && move->to!=player)
                 player->tag["InvokeTuntian"] = true;
         }else if(event == CardLostDone){
             if(!player->tag.value("InvokeTuntian", false).toBool())
@@ -848,9 +838,7 @@ public:
                     log.to << player;
                     room->sendLog(log);
 
-                    room->setCurrent(player);
-                    room->getThread()->trigger(TurnStart, player);
-                    room->setCurrent(liushan);
+                    player->gainAnExtraTurn();
                 }
 
                 break;
@@ -974,6 +962,9 @@ public:
             room->detachSkillFromPlayer(zuoci, huashen_skill);
 
         QVariantList huashens = zuoci->tag["Huashens"].toList();
+        if(huashens.isEmpty())
+            return QString();
+
         QStringList huashen_generals;
         foreach(QVariant huashen, huashens)
             huashen_generals << huashen.toString();
@@ -1062,7 +1053,8 @@ public:
 
     virtual bool onPhaseChange(ServerPlayer *zuoci) const{
         QString skill_name = Huashen::SelectSkill(zuoci, false);
-        zuoci->getRoom()->acquireSkill(zuoci, skill_name);
+        if(!skill_name.isEmpty())
+            zuoci->getRoom()->acquireSkill(zuoci, skill_name);
 
         return false;
     }
@@ -1146,7 +1138,7 @@ MountainPackage::MountainPackage()
     General *caiwenji = new General(this, "caiwenji", "qun", 3, false);
     caiwenji->addSkill(new Beige);
     caiwenji->addSkill(new Duanchang);
-    caiwenji->addSkill(new Guixiang);
+    caiwenji->addSkill(new SPConvertSkill("guixiang", "caiwenji", "sp_caiwenji"));
 
     General *zuoci = new General(this, "zuoci", "qun", 3);
     zuoci->addSkill(new Huashen);

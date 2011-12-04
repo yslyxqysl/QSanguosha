@@ -80,24 +80,9 @@ sgs.ai_skill_choice.xuanfeng = function(self, choices)
 	return "nothing"
 end
 
-sgs.ai_skill_playerchosen.xuanfeng_damage = function(self,targets)
-	self:sort(self.enemies, "defense")
-	for _, enemy in ipairs(self.enemies) do
-		if self.player:distanceTo(enemy)<=1 then return enemy end
-	end
+sgs.ai_skill_playerchosen.xuanfeng_damage = sgs.ai_skill_playerchosen.damage
 
-	return nil
-end
-
-sgs.ai_skill_playerchosen.xuanfeng_slash = function(self,targets)
-	local slash = sgs.Card_Parse(("slash[%s:%s]"):format(sgs.Card_NoSuit, 0))
-	self:sort(self.enemies, "defense")
-	for _, enemy in ipairs(self.enemies) do
-		if not (self:slashProhibit(slash ,enemy) or self:slashIsEffective(slash, enemy)) then return enemy end
-	end
---	self:log("unfound")
-	return self.enemies[1]
-end
+sgs.ai_skill_playerchosen.xuanfeng_slash = sgs.ai_skill_playerchosen.zero_card_as_slash
 
 --xuanhuo
 xuanhuo_skill={}
@@ -115,7 +100,7 @@ sgs.ai_skill_use_func["XuanhuoCard"] = function(card, use, self)
 	self:sortByUseValue(cards,true)
 
 	local target
-	for _, friend in ipairs(self.friends) do
+	for _, friend in ipairs(self.friends_noself) do
 		if self:hasSkills(sgs.lose_equip_skill, friend) then
 			for _, card in ipairs(cards) do
 				if card:getSuit() == sgs.Card_Heart and self.player:getHandcardNum() > 1 then
@@ -201,15 +186,13 @@ sgs.ai_skill_use_func["GanluCard"] = function(card, use, self)
 
 		local equips  = {}
 		if sunshangxiang and (max_equip~=0 or min_equip~=5) then
-			use.card = sgs.Card_Parse("@GanluCard=.")
-			if use.to then
-				use.to:append(sunshangxiang)
-			end
 			if (max_equip ~= 0) and ((max_equip-self:getCardsNum(".", sunshangxiang, "e"))>=0) then
-				if use.to then use.to:append(max_friend) end
+				use.card = sgs.Card_Parse("@GanluCard=.")
+				if use.to then use.to:append(sunshangxiang) use.to:append(max_friend) end
 				return
 			elseif(min_equip ~= 5) and ((self:getCardsNum(".", sunshangxiang, "e")-min_equip)>=0) then
-				if use.to then use.to:append(min_friend) end
+				use.card = sgs.Card_Parse("@GanluCard=.")
+				if use.to then use.to:append(sunshangxiang) use.to:append(min_friend) end
 				return
 			end
 		end
@@ -218,15 +201,39 @@ sgs.ai_skill_use_func["GanluCard"] = function(card, use, self)
 	for _, friend in ipairs(self.friends) do
 		for _, enemy in ipairs(self.enemies) do
 			if not self:hasSkills(sgs.lose_equip_skill, enemy) then
-				if ((self:getCardsNum(".", enemy, "e")-self:getCardsNum(".", friend, "e"))<= lost_hp) and
-					(self:getCardsNum(".", enemy, "e")>=self:getCardsNum(".", friend, "e")) and
-					(self:getCardsNum(".", enemy, "e")>0) then
+				local ee = self:getCardsNum(".",enemy,"e")
+				if self:isEquip("GaleShell", enemy) then ee = ee - 1 end
+				local fe = self:getCardsNum(".",friend, "e")
+				if self:isEquip("GaleShell", friend) then fe = fe - 1 end
+				local value = self:evaluateArmor(enemy:getArmor(),friend) - self:evaluateArmor(friend:getArmor(),enemy)
+					- self:evaluateArmor(friend:getArmor(),friend) + self:evaluateArmor(enemy:getArmor(),enemy)
+				if self:getCardsNum(".", enemy, "e")-self:getCardsNum(".", friend, "e") <= lost_hp and
+					self:getCardsNum(".", enemy, "e")>0 and
+					(ee > fe or (ee == fe and value>0)) then
 					use.card = sgs.Card_Parse("@GanluCard=.")
-					if use.to then use.to:append(friend) end
-					if use.to then use.to:append(enemy) end
+					if use.to then
+						use.to:append(friend)
+						use.to:append(enemy)
+					end
 					return
 				end
 			end
+		end
+	end
+
+	target = nil
+	for _,friend in ipairs(self.friends) do
+		if self:isEquip("YitianSword", friend) or (self:isEquip("SilverLion",friend) and friend:isWounded()) then target = friend break end
+	end
+	if not target then return end
+	for _,friend in ipairs(self.friends) do
+		if friend~=target and math.abs(self:getCardsNum(".", friend, "e")-self:getCardsNum(".", target, "e")) <= lost_hp then
+			use.card = sgs.Card_Parse("@GanluCard=.")
+			if use.to then
+				use.to:append(friend)
+				use.to:append(target)
+			end
+			return
 		end
 	end
 end
@@ -243,11 +250,7 @@ end
 sgs.ai_skill_use_func["JujianCard"] = function(card, use, self)
 	local abandon_handcard = {}
 	local index = 0
-	local hasPeach=false
-	local find_peach = self.player:getCards("h")
-	for _, ispeach in sgs.qlist(find_peach) do
-		if ispeach:inherits("Peach") then hasPeach=true break end
-	end
+	local hasPeach = (self:getCardsNum("Peach") > 0)
 
 	local trick_num, basic_num, equip_num = 0, 0, 0
 	if not hasPeach and self.player:isWounded() and self.player:getHandcardNum() >=3 then
@@ -281,41 +284,48 @@ sgs.ai_skill_use_func["JujianCard"] = function(card, use, self)
 			use.card = sgs.Card_Parse("@JujianCard=" .. table.concat(abandon_handcard, "+"))
 			return
 		end
-	else
-		local cards = self.player:getHandcards()
-		cards=sgs.QList2Table(cards)
-		self:sortByUseValue(cards, true)
-		local slash_num = self:getCardsNum("Slash")
-		local jink_num = self:getCardsNum("Jink")
-		for _, friend in ipairs(self.friends_noself) do
-			if (friend:getHandcardNum()<2) or (friend:getHandcardNum()<friend:getHp()+1) or self.player:isWounded() then
-				for _, card in ipairs(cards) do
-					if #abandon_handcard == 3 then break end
-					if not card:inherits("Nullification") and not card:inherits("EquipCard") and
-						not card:inherits("Peach") and not card:inherits("Jink") and
-						not card:inherits("Indulgence") and not card:inherits("SupplyShortage") then
+	end
+	abandon_handcard = {}
+	local cards = self.player:getHandcards()
+	cards=sgs.QList2Table(cards)
+	self:sortByUseValue(cards, true)
+	local slash_num = self:getCardsNum("Slash")
+	local jink_num = self:getCardsNum("Jink")
+	for _, friend in ipairs(self.friends_noself) do
+		if (friend:getHandcardNum()<2) or (friend:getHandcardNum()<friend:getHp()+1) or self.player:isWounded() then
+			for _, card in ipairs(cards) do
+				if #abandon_handcard >= 3 then break end
+				if not card:inherits("Nullification") and not card:inherits("EquipCard") and
+					not card:inherits("Peach") and not card:inherits("Jink") and
+					not card:inherits("Indulgence") and not card:inherits("SupplyShortage") then
+					table.insert(abandon_handcard, card:getId())
+					index = 5
+				elseif card:inherits("Slash") and slash_num > 1 then
+					if (self.player:getWeapon() and not self.player:getWeapon():objectName()=="crossbow") or
+						not self.player:getWeapon() then
 						table.insert(abandon_handcard, card:getId())
 						index = 5
-					elseif card:inherits("Slash") and slash_num > 1 then
-						if (self.player:getWeapon() and not self.player:getWeapon():objectName()=="crossbow") or
-							not self.player:getWeapon() then
-							table.insert(abandon_handcard, card:getId())
-							index = 5
-							slash_num = slash_num - 1
-						end
-					elseif card:inherits("Jink") and jink_num > 1 then
-						table.insert(abandon_handcard, card:getId())
-						index = 5
-						jink_num = jink_num - 1
+						slash_num = slash_num - 1
 					end
-				end
-				if index == 5 then
-					use.card = sgs.Card_Parse("@JujianCard=" .. table.concat(abandon_handcard, "+"))
-					if use.to then use.to:append(friend) end
-					return
+				elseif card:inherits("Jink") and jink_num > 1 then
+					table.insert(abandon_handcard, card:getId())
+					index = 5
+					jink_num = jink_num - 1
 				end
 			end
+			if index == 5 then
+				use.card = sgs.Card_Parse("@JujianCard=" .. table.concat(abandon_handcard, "+"))
+				if use.to then use.to:append(friend) end
+				return
+			end
 		end
+	end
+	if #self.friends_noself>0 and self:getOverflow()>0 then
+		self:sort(self.friends_noself, "handcard")
+		local discard = self:askForDiscard("gamerule", math.min(self:getOverflow(),3))
+		use.card = sgs.Card_Parse("@JujianCard=" .. table.concat(discard, "+"))
+		if use.to then use.to:append(self.friends_noself[1]) end
+		return
 	end
 end
 

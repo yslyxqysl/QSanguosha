@@ -73,6 +73,7 @@ sgs.ai_use_value =
 		--special
 		Analeptic = 5.98,
 		Jink=8.9,
+		Shit=-10,
 }
 
 sgs.ai_use_priority = {
@@ -80,6 +81,7 @@ sgs.ai_use_priority = {
 
 --skill cards
 		XinzhanCard = 9.2,
+		LexueCard = 10,
 		GuhuoCard = 10,
 		TianyiCard = 4,
 		JieyinCard = 2.5,

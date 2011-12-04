@@ -6,7 +6,7 @@
 #include "settings.h"
 
 Player::Player(QObject *parent)
-    :QObject(parent), owner(false), general(NULL), general2(NULL),
+    :QObject(parent), owner(false), ready(false), general(NULL), general2(NULL),
     hp(-1), max_hp(-1), state("online"), seat(0), alive(true),
     phase(NotActive),
     weapon(NULL), armor(NULL), defensive_horse(NULL), offensive_horse(NULL),
@@ -30,6 +30,17 @@ void Player::setOwner(bool owner){
     if(this->owner != owner){
         this->owner = owner;
         emit owner_changed(owner);
+    }
+}
+
+bool Player::isReady() const{
+    return ready;
+}
+
+void Player::setReady(bool ready){
+    if(this->ready != ready){
+        this->ready = ready;
+        emit ready_changed(ready);
     }
 }
 
@@ -716,13 +727,13 @@ bool Player::isJilei(const Card *card) const{
 
         foreach(int card_id, card->getSubcards()){
             const Card *c = Sanguosha->getCard(card_id);
-            if(jilei_set.contains(c->getTypeId()))
+            if(jilei_set.contains(c->getTypeId())&&!(c->isEquipped()))
                 return true;
         }
 
         return false;
     }else
-        return jilei_set.contains(type);
+        return jilei_set.contains(type)&&!(card->isEquipped());
 }
 
 bool Player::isCaoCao() const{

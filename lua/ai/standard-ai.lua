@@ -4,10 +4,13 @@ sgs.ai_skill_invoke.jianxiong = function(self, data)
 end
 
 sgs.ai_skill_invoke.jijiang = function(self, data)
-	if self:getCardsNum("Slash")<=0 then
-		return true
+	local cards = self.player:getHandcards()
+	for _, card in sgs.qlist(cards) do
+		if card:inherits("Slash") then
+			return false
+		end
 	end
-	return false
+	if sgs.jijiangsource then return false else return true end
 end
 
 sgs.ai_skill_choice.jijiang = function(self , choices)
@@ -48,6 +51,10 @@ end
 -- hujia
 sgs.ai_skill_invoke.hujia = function(self, data)
 	local cards = self.player:getHandcards()
+	if sgs.hujiasource then return false end
+	for _, friend in ipairs(self.friends_noself) do
+		if friend:getKingdom() == "wei" and self:isEquip("EightDiagram", friend) then return true end
+	end
 	for _, card in sgs.qlist(cards) do
 		if card:inherits("Jink") then
 			return false
@@ -103,7 +110,7 @@ end
 sgs.ai_skill_invoke.fankui = function(self, data)
 	local target = data:toPlayer()
 	if self:isFriend(target) then
-		return target:hasSkill("xiaoji") and not target:getEquips():isEmpty()
+		return (target:hasSkill("xiaoji") and not target:getEquips():isEmpty()) or (self:isEquip("SilverLion",target) and target:isWounded())
 	end
 	if self:isEnemy(target) then				---fankui without zhugeliang and luxun
 			if (target:hasSkill("kongcheng") or target:hasSkill("lianying")) and target:getHandcardNum() == 1 then
@@ -151,8 +158,8 @@ sgs.ai_skill_use["@@liuli"] = function(self, prompt)
 	return "."
 end
 
-sgs.ai_skill_invoke["@guicai"]=function(self,prompt,judge)
-	judge = judge or self.player:getTag("Judge"):toJudge()
+sgs.ai_skill_invoke["@guicai"]=function(self,prompt)
+	local judge = self.player:getTag("Judge"):toJudge()
 
 	if self:needRetrial(judge) then
 		local cards = sgs.QList2Table(self.player:getHandcards())

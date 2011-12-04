@@ -17,7 +17,7 @@ public:
            return false;
 
         if(player->askForSkillInvoke("yitian_sword"))
-            player->getRoom()->askForUseCard(player, "slash", "yitian-slash");
+            player->getRoom()->askForUseCard(player, "slash", "@askforslash");
 
         return false;
     }
@@ -62,21 +62,24 @@ bool ChengxiangCard::targetsFeasible(const QList<const Player *> &targets, const
 }
 
 void ChengxiangCard::use(Room *room, ServerPlayer *source, const QList<ServerPlayer *> &targets) const{
-    QList<ServerPlayer *> to = targets;
-
-    if(to.isEmpty())
+    if(targets.isEmpty()){
+        QList<ServerPlayer *> to;
         to << source;
-
-    return SkillCard::use(room, source, to);
+        SkillCard::use(room, source, to);
+    }else
+        SkillCard::use(room, source, targets);
 }
 
 void ChengxiangCard::onEffect(const CardEffectStruct &effect) const{
     Room *room = effect.to->getRoom();
 
-    RecoverStruct recover;
-    recover.card = this;
-    recover.who = effect.from;
-    room->recover(effect.to, recover);
+    if(effect.to->isWounded()){
+        RecoverStruct recover;
+        recover.card = this;
+        recover.who = effect.from;
+        room->recover(effect.to, recover);
+    }else
+        effect.to->drawCards(2);
 }
 
 class ChengxiangViewAsSkill: public ViewAsSkill{
@@ -1849,7 +1852,7 @@ YitianPackage::YitianPackage()
 
     related_skills.insertMulti("jueji", "#jueji-get");
 
-    General *lukang = new General(this, "lukang", "wu", 3);
+    General *lukang = new General(this, "lukang", "wu", 4);
     lukang->addSkill(new LukangWeiyan);
     lukang->addSkill(new Kegou);
 
